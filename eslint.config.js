@@ -1,87 +1,120 @@
 import js from '@eslint/js';
-import stylistic from '@stylistic/eslint-plugin';
-import react from 'eslint-plugin-react';
+import { defineConfig, globalIgnores } from 'eslint/config';
+import cssPlugin from 'eslint-plugin-css-modules';
+import importPlugin from 'eslint-plugin-import';
+import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
+import reactPlugin from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
 import simpleImportSort from 'eslint-plugin-simple-import-sort';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
-export default tseslint.config(
-    { ignores: ['dist'] },
+export default defineConfig([
+    globalIgnores([
+        'node_modules',
+        'dist',
+        'build',
+        '*.config.js',
+        '*.config.mjs',
+    ]),
+
+    js.configs.recommended,
+
+    tseslint.configs.strictTypeChecked,
+    tseslint.configs.stylisticTypeChecked,
+
+    importPlugin.flatConfigs.recommended,
+
     {
-        files: ['**/*.{ts,tsx,js}'],
-        languageOptions: {
-            ecmaVersion: 2020,
-            parserOptions: {
-                ecmaFeatures: {
-                    jsx: true,
-                },
-            },
-            globals: globals.browser,
-        },
         plugins: {
-            react,
+            'simple-import-sort': simpleImportSort,
+            ['css-modules']: cssPlugin,
+        },
+
+        settings: {
+            'import/resolver': {
+                typescript: {},
+            },
+        },
+
+        languageOptions: {
+            ecmaVersion: 'latest',
+
+            globals: {
+                ...globals.browser,
+                ...globals.node,
+                ...globals.commonjs,
+            },
+        },
+
+        // this rules applies to all files
+        rules: {
+            'simple-import-sort/imports': 'error',
+            'simple-import-sort/exports': 'error',
+            'import/no-cycle': 'error',
+            'import/no-duplicates': 'error',
+
+            'no-var': 'error',
+
+            'css-modules/no-unused-class': 'error',
+            'css-modules/no-undef-class': 'error',
+        },
+    },
+
+    {
+        files: ['**/*.{tsx,jsx}'],
+
+        plugins: {
+            react: reactPlugin,
             'react-hooks': reactHooks,
             'react-refresh': reactRefresh,
-            '@stylistic': stylistic,
-            'simple-import-sort': simpleImportSort,
-
         },
+
         settings: {
             react: {
                 version: 'detect',
             },
         },
-        extends: [
-            js.configs.recommended,
-            ...tseslint.configs.recommended,
-        ],
+
+        languageOptions: {
+            parserOptions: {
+                ecmaFeatures: {
+                    jsx: true,
+                },
+            },
+        },
+
         rules: {
             ...reactHooks.configs.recommended.rules,
-            ...react.configs.recommended.rules,
-            'react-refresh/only-export-components': [
-                'warn',
-                { allowConstantExport: true },
-            ],
-            semi: ['error', 'always'],
-            quotes: ['error', 'single'],
-            eqeqeq: 'error',
-            'no-nested-ternary': 'error',
-            'simple-import-sort/imports': 'error',
-            'simple-import-sort/exports': 'error',
-            '@stylistic/indent': ['error', 4],
-            '@typescript-eslint/no-unused-vars': 'warn',
-            '@typescript-eslint/no-explicit-any': 'warn',
-            '@typescript-eslint/ban-ts-comment': 'warn',
-            '@typescript-eslint/no-unused-expressions': [
-                'error',
-                { allowShortCircuit: true },
-            ],
-            // Исключение
-            'react/react-in-jsx-scope': 'off',
-            // Пробелы
-            // Убирает пробелы в конце строк
-            'no-trailing-spaces': 'error',
-
-            // Запрещает множественные пробелы подряд
-            'no-multi-spaces': 'error',
-
-            // Удаляет пробел перед ;
-            'semi-spacing': ['error', { before: false, after: true }],
-
-            // Пробелы вокруг ключевых слов (`if`, `else`, `for`)
-            'keyword-spacing': ['error', { before: true, after: true }],
-
-            // Пробел после запятых, но не перед
-            'comma-spacing': ['error', { before: false, after: true }],
-
-            // Пробелы внутри скобок объектов/массивов
-            'object-curly-spacing': ['error', 'always'],
-
-            // Пробел внутри JSX атрибутов и между ними
-            'react/jsx-tag-spacing': ['error', { beforeSelfClosing: 'always' }],
-
+            ...reactRefresh.configs.vite.rules,
+            ...reactPlugin.configs.recommended.rules,
+            ...reactPlugin.configs['jsx-runtime'].rules,
         },
     },
-);
+
+    {
+        files: ['**/*.{ts,tsx}'],
+
+        languageOptions: {
+            parser: tseslint.parser,
+
+            parserOptions: {
+                project: ['./tsconfig.node.json', './tsconfig.app.json'],
+                tsconfigRootDir: import.meta.dirname,
+            },
+        },
+
+        rules: {
+            '@typescript-eslint/consistent-type-imports': 'error',
+        },
+    },
+
+    {
+        files: ['**/*.{js,jsx,mjs}'],
+
+        extends: [tseslint.configs.disableTypeChecked],
+    },
+
+    eslintPluginPrettierRecommended,
+]);
