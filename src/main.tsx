@@ -8,7 +8,7 @@ import App from './App.tsx';
 const rootContainer = document.getElementById('root');
 
 if (!rootContainer) {
-    throw new Error();
+    throw new Error('There is no root container');
 }
 
 createRoot(rootContainer).render(

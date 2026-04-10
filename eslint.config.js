@@ -59,6 +59,8 @@ export default defineConfig([
 
             'css-modules/no-unused-class': 'error',
             'css-modules/no-undef-class': 'error',
+
+            'prefer-const': 'error',
         },
     },
 
